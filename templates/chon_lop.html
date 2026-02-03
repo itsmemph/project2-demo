@@ -1,29 +1,34 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
   <meta charset="UTF-8">
   <title>TRẠI XUÂN | MENU</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/css/style.css">
+
 </head>
+
 <body>
 
-<div class="header">
-  <p>Chọn lớp để xem menu</p>
-</div>
+  <div class="header">
+    <p>Chọn lớp để xem menu</p>
+  </div>
 
-<div class="menu-container">
-  <form method="post">
-    {% for lop in classes %}
+  <div class="menu-container">
+    <form id="chon-lop" method="post">
+      {% for lop in classes %}
       <button class="menu-btn" name="lop" value="{{ lop }}">
         {{ lop }}
       </button>
-    {% endfor %}
-  </form>
-</div>
+      {% endfor %}
+    </form>
+  </div>
 
-<div class="footer">
-  <button onclick="window.location.href='{{ back_url }}'" class="back-btn">⬅ Quay lại trang chủ</button>
-</div>
+  <div class="footer">
+    <button onclick="window.location.href='{{ back_url }}'" class="back-btn">⬅ Quay lại trang chủ</button>
+  </div>
 
 </body>
+
 </html>

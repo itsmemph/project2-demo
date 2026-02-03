@@ -4,6 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <title>TRẠI XUÂN | THÔNG TIN HỌC SINH</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/css/style.css">
 </head>
 
 <body>
@@ -11,7 +13,6 @@
 
   <form method="post">
 
-    <!-- CHỌN LỚP -->
     <div>
       <select id="lop" name="lop" onchange="updateStudents()" required>
         <option value="">-- Chọn lớp --</option>
@@ -21,7 +22,6 @@
       </select>
     </div>
 
-    <!-- CHỌN TÊN -->
     <div>
       <select id="ten" name="ten" required>
         <option value="">-- Chọn tên học sinh --</option>
@@ -31,7 +31,7 @@
     <button type="submit">Xác nhận</button>
   </form>
   <script>
-    const students = {{ students | tojson }};
+    const students = {{ students | tojson | safe }};
 
     function updateStudents() {
       const selectedClass = document.getElementById("lop").value;

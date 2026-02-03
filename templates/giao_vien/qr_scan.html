@@ -5,6 +5,8 @@
   <meta charset="UTF-8">
   <title>QUÉT QR HỌC SINH</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 
 <body>
@@ -15,7 +17,7 @@
 
   <div id="reader"></div>
 
-  <div id="confirm-box">
+  <div id="confirm-box" style="display: none;">
     <p id="student-info"></p>
     <button onclick="finishScan()">Hoàn thành</button>
     <button onclick="continueScan()">Quét tiếp</button>
@@ -26,7 +28,7 @@
   <h3>Danh sách đã quét</h3>
   <div id="scanned-list"></div>
 
-  <a href="/giaovien/trangchu">⬅ Quay lại trang chủ</a>
+  <button onclick="window.location.href='/giaovien/trang_chu'">Quay lại trang chủ</button>
 
   <script>
     let scanner = null;
@@ -38,6 +40,15 @@
     const infoText = document.getElementById("student-info");
     const listDiv = document.getElementById("scanned-list");
 
+    window.onload = () => {
+      fetch("/get-scanned-list")
+        .then(res => res.json())
+        .then(data => {
+          scannedStudents = data || [];
+          renderList();
+        });
+    };
+
     document.getElementById("startBtn").onclick = () => {
       readerDiv.style.display = "block";
       startScanner();
@@ -47,27 +58,24 @@
       if (isScanning) return;
 
       isScanning = true;
-
       scanner = new Html5Qrcode("reader");
 
       scanner.start(
         { facingMode: "environment" },
         { fps: 10, qrbox: 250 },
         onScanSuccess,
-        () => { } // bỏ qua lỗi frame
+        () => { }
       ).catch(err => {
-        console.error("Camera error:", err);
+        console.error(err);
         isScanning = false;
       });
     }
 
     function onScanSuccess(decodedText) {
       if (!isScanning) return;
-
       isScanning = false;
 
-      scanner.stop().then(() => {
-      }).catch(() => { });
+      scanner.stop().catch(() => { });
 
       infoText.innerText = "Đang xử lý...";
       confirmBox.style.display = "block";
@@ -77,21 +85,38 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ma_hs: decodedText })
       })
-        .then(res => res.text())
-        .then(msg => {
-          infoText.innerText = msg;
-        });
+        .then(res => res.json())
+        .then(data => {
+          infoText.innerText = data.message;
 
-      if (!scannedStudents.includes(decodedText)) {
-        scannedStudents.push(decodedText);
-        renderList();
-      }
+          if (data.status === "success" || data.status === "duplicate") {
+            const hs = {
+              ma_hs: data.ma_hs,
+              ten: data.ten,
+              lop: data.lop
+            };
+
+            if (!scannedStudents.some(s => s.ma_hs === hs.ma_hs)) {
+              scannedStudents.push(hs);
+              renderList();
+
+              fetch("/add-scanned-student", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(hs)
+              });
+            }
+          }
+        });
     }
 
     function renderList() {
       listDiv.innerHTML = "";
       scannedStudents.forEach((hs, i) => {
-        listDiv.innerHTML += `<p>${i + 1}. ${hs}</p>`;
+        listDiv.innerHTML += `
+        <p>${i + 1}. <b>${hs.ten}</b> – ${hs.lop}
+        <span style="color:gray">(${hs.ma_hs})</span></p>
+      `;
       });
     }
 
@@ -108,10 +133,9 @@
         scanner.clear().catch(() => { });
         scanner = null;
       }
-
-      alert("Hoàn tất quét QR");
     }
   </script>
+
 
 
 </body>

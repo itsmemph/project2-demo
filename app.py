@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, url_for
+from flask import Flask, render_template, request, redirect, session, url_for, jsonify
 import pandas as pd
 
 app = Flask(__name__)
@@ -12,8 +12,8 @@ def choose_role():
 def hocsinh_select():
     df = pd.read_excel("data/danhsachhocsinh.xlsx")
 
-    lop = sorted(df["lop"].unique())
-    hocsinh = df.to_dict(orient="records")
+    classes = sorted(df["lop"].unique())
+    students = df.to_dict(orient="records")
 
     if request.method == "POST":
         session.clear()
@@ -23,9 +23,9 @@ def hocsinh_select():
         return redirect("/hocsinh/trang_chu")
 
     return render_template(
-        "/hoc_sinh/hocsinh_thongtin.html",
-        lop=lop,
-        hocsinh=hocsinh
+        "/hoc_sinh/hocsinh_chonthongtin.html",
+        classes=classes,
+        students=students,
     )
 
 @app.route("/hocsinh/trang_chu")
@@ -34,7 +34,7 @@ def hocsinh_trang_chu():
         return redirect("/")
 
     return render_template(
-        "/hoc_sinh/hocsinh.html",
+        "/hoc_sinh/hocsinh_trangchu.html",
         ten=session["ten"],
         lop=session["lop"],
         menu_img="menu/{}.jpg".format(session["lop"])
@@ -60,7 +60,7 @@ def login():
 
         return "Sai tài khoản hoặc mật khẩu"
 
-    return render_template("giaovien_dangnhap.html")
+    return render_template("/giao_vien/giaovien_dangnhap.html")
 
 @app.route("/giaovien/trang_chu")
 def giaovien_trang_chu():
@@ -68,27 +68,22 @@ def giaovien_trang_chu():
         return redirect("/login")
 
     return render_template(
-        "giaovien.html",
+        "/giao_vien/giaovien_trangchu.html",
         user=session["username"]
     )
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/")
 
 from datetime import datetime
 import os
 
 checkin_FILE = "data/checkin.xlsx"
-hocsinh_FILE = "data/hocsinh.xlsx"
+hocsinh_FILE = "data/danhsachhocsinh.xlsx"
 
 @app.route("/scan")
 def scan():
     if session.get("role") != "giaovien":
         return redirect("/login")
 
-    return render_template("qr_scan.html")
+    return render_template("/giao_vien/qr_scan.html")
 
 # có thể tách hàm quét qr ra file riêng, sau đó import vào là được ._.
 @app.route("/qr-result", methods=["POST"])
@@ -96,13 +91,16 @@ def qr_result():
     if session.get("role") != "giaovien":
         return "Không đủ quyền hạn để truy cập"
     ma_hs = str(request.json.get("ma_hs")).strip()
-    giam_thi = session.get("username")
+    giao_vien = session.get("username")
 
     df_hocsinhs = pd.read_excel(hocsinh_FILE, dtype={"ma_hs": str})
 
     hs = df_hocsinhs[df_hocsinhs["ma_hs"] == ma_hs]
     if hs.empty:
-        return "Không tìm thấy học sinh"
+        return jsonify({
+            "status": "error",
+            "message": "Học sinh không có trong danh sách"
+        })
 
     ten = hs.iloc[0]["ten"]
     lop = hs.iloc[0]["lop"]
@@ -120,11 +118,14 @@ def qr_result():
 
     if (df_checkin["ma_hs"] == ma_hs).any():
         old = df_checkin[df_checkin["ma_hs"] == ma_hs].iloc[0]
-        return (
-            f"ĐÃ KIỂM TRA TRƯỚC ĐÓ\n"
-            f"{old['ten']} – {old['lop']}\n"
-            f"Lúc {old['time']} bởi {old['giam_thi']}"
-        )
+        return jsonify({
+            "status": "duplicate",
+            "ma_hs": ma_hs,
+            "ten": old["ten"],
+            "lop": old["lop"],
+            "time": old["time"],
+            "message": f" Đã kiểm tra học sinh \n{old['ten']} – {old['lop']} vào lúc {old['time']}"
+        })
 
     now = datetime.now().strftime("%H:%M:%S %d/%m/%Y")
     new_row = {
@@ -132,7 +133,7 @@ def qr_result():
         "ten": ten,
         "lop": lop,
         "time": now,
-        "giam_thi": giam_thi
+        "giao_vien": giao_vien
     }
 
     df_checkin = pd.concat(
@@ -142,7 +143,52 @@ def qr_result():
 
     df_checkin.to_excel(checkin_FILE, index=False)
 
-    return f"KIỂM TRA THÀNH CÔNG\n {ten} – {lop}"
+    return jsonify({
+        "status": "success",
+        "ma_hs": ma_hs,
+        "ten": ten,
+        "lop": lop,
+        "time": now,
+        "message": f"Kiểm tra thành công\n {ten} – {lop}"
+    })
+
+@app.route("/add-scanned-student", methods=["POST"])
+def add_scanned_student():
+    if session.get("role") != "giaovien":
+        return "", 403
+
+    data = request.json
+    key = f"scanned_list_{session['username']}"
+
+    if key not in session:
+        session[key] = []
+
+    # tránh trùng ma_hs
+    if not any(hs["ma_hs"] == data["ma_hs"] for hs in session[key]):
+        session[key].append({
+            "ma_hs": data["ma_hs"],
+            "ten": data["ten"],
+            "lop": data["lop"]
+        })
+
+    session.modified = True
+    return "", 204
+
+
+
+@app.route("/get-scanned-list")
+def get_scanned_list():
+    if session.get("role") != "giaovien":
+        return [], 403
+
+    key = f"scanned_list_{session['username']}"
+    return session.get(key, [])
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/")
 
 @app.route("/map")
 def view_map():
