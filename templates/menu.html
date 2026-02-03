@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>TRẠI XUÂN | MENU</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+
+<div class="header">
+  <h1>MENU CỦA LỚP {{ lop }}</h1>
+</div>
+
+<div class="menu-container">
+  <img src="{{ url_for('static', filename=menu_img) }}" alt="Menu lớp {{ lop }}" class="menu-image">
+</div>
+
+<div class="footer">
+  <button onclick="window.location.href='/menu'" class="back-btn">⬅ Xem lớp khác</button>
+</div>
+
+</body>
+</html>

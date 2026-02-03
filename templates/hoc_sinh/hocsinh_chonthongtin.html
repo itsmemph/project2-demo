@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <title>TRẠI XUÂN | THÔNG TIN HỌC SINH</title>
+</head>
+
+<body>
+  <h2>XÁC NHẬN THÔNG TIN HỌC SINH</h2>
+
+  <form method="post">
+
+    <!-- CHỌN LỚP -->
+    <div>
+      <select id="lop" name="lop" onchange="updateStudents()" required>
+        <option value="">-- Chọn lớp --</option>
+        {% for lop in classes %}
+        <option value="{{ lop }}">{{ lop }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- CHỌN TÊN -->
+    <div>
+      <select id="ten" name="ten" required>
+        <option value="">-- Chọn tên học sinh --</option>
+      </select>
+    </div>
+
+    <button type="submit">Xác nhận</button>
+  </form>
+  <script>
+    const students = {{ students | tojson }};
+
+    function updateStudents() {
+      const selectedClass = document.getElementById("lop").value;
+      const tenSelect = document.getElementById("ten");
+
+      tenSelect.innerHTML = '<option value="">-- Chọn tên học sinh --</option>';
+
+      students.forEach(hs => {
+        if (hs.lop === selectedClass) {
+          const option = document.createElement("option");
+          option.value = hs.ten;
+          option.textContent = hs.ten;
+          tenSelect.appendChild(option);
+        }
+      });
+    }
+  </script>
+
+
+</body>
+
+</html>

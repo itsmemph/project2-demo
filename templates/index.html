@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title> TRẠI XUÂN | {{ title }}</title>
+  <link rel="stylesheet" href="/css/ui.css">
+</head>
+<body>
+
+  <header class="header">
+    <h1>{{ title }}</h1>
+  </header>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% if back_url %}
+  <footer class="footer">
+    <button onclick="window.location.href='{{ back_url }}'" class="btn">⬅ Quay lại</button>
+  </footer>
+  {% endif %}
+
+</body>
+</html>

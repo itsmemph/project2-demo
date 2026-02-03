@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <title>QUÉT QR HỌC SINH</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+
+<body>
+
+  <h2>QUÉT QR HỌC SINH</h2>
+
+  <button id="startBtn">Bắt đầu quét</button>
+
+  <div id="reader"></div>
+
+  <div id="confirm-box">
+    <p id="student-info"></p>
+    <button onclick="finishScan()">Hoàn thành</button>
+    <button onclick="continueScan()">Quét tiếp</button>
+  </div>
+
+  <hr>
+
+  <h3>Danh sách đã quét</h3>
+  <div id="scanned-list"></div>
+
+  <a href="/giaovien/trangchu">⬅ Quay lại trang chủ</a>
+
+  <script>
+    let scanner = null;
+    let scannedStudents = [];
+    let isScanning = false;
+
+    const readerDiv = document.getElementById("reader");
+    const confirmBox = document.getElementById("confirm-box");
+    const infoText = document.getElementById("student-info");
+    const listDiv = document.getElementById("scanned-list");
+
+    document.getElementById("startBtn").onclick = () => {
+      readerDiv.style.display = "block";
+      startScanner();
+    };
+
+    function startScanner() {
+      if (isScanning) return;
+
+      isScanning = true;
+
+      scanner = new Html5Qrcode("reader");
+
+      scanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        onScanSuccess,
+        () => { } // bỏ qua lỗi frame
+      ).catch(err => {
+        console.error("Camera error:", err);
+        isScanning = false;
+      });
+    }
+
+    function onScanSuccess(decodedText) {
+      if (!isScanning) return;
+
+      isScanning = false;
+
+      scanner.stop().then(() => {
+      }).catch(() => { });
+
+      infoText.innerText = "Đang xử lý...";
+      confirmBox.style.display = "block";
+
+      fetch("/qr-result", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ma_hs: decodedText })
+      })
+        .then(res => res.text())
+        .then(msg => {
+          infoText.innerText = msg;
+        });
+
+      if (!scannedStudents.includes(decodedText)) {
+        scannedStudents.push(decodedText);
+        renderList();
+      }
+    }
+
+    function renderList() {
+      listDiv.innerHTML = "";
+      scannedStudents.forEach((hs, i) => {
+        listDiv.innerHTML += `<p>${i + 1}. ${hs}</p>`;
+      });
+    }
+
+    function continueScan() {
+      confirmBox.style.display = "none";
+      startScanner();
+    }
+
+    function finishScan() {
+      confirmBox.style.display = "none";
+      readerDiv.style.display = "none";
+
+      if (scanner) {
+        scanner.clear().catch(() => { });
+        scanner = null;
+      }
+
+      alert("Hoàn tất quét QR");
+    }
+  </script>
+
+
+</body>
+
+</html>

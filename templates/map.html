@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>TRẠI XUÂN | BẢN ĐỒ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="stylesheet" href="/css/ui.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>BẢN ĐỒ TRẠI XUÂN</h1>
+</div>
+
+<div class="map-container">
+  <img
+    src="{{ url_for('static', filename='ban_do_trai_xuan.jpg') }}"
+    alt="Bản đồ Trại Xuân | Khi tôi 18"
+    class="map-image"
+  >
+</div>
+
+<div class="footer">
+  <button onclick="window.location.href='{{ back_url }}'" class="back-btn">⬅ Quay lại trang chủ</button>
+</div>
+
+</body>
+</html>
