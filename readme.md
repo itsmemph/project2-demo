@@ -2,8 +2,8 @@ cd project -> pip install requirements.txt
 
 Route của web hoạt động như sau:
 → Chọn vai trò
-   ├── học sinh → chọn lớp + tên → thông tin học sinh + map + menu các lớp
-   └── giáo viên → đăng nhập → map + menu các lớp + quét QR
+   - học sinh → chọn lớp + tên → thông tin học sinh + map + menu các lớp + menu lớp mình
+   - giáo viên → đăng nhập → map + menu các lớp + quét QR
 
 Chưa thêm CSS, chỉ đang thuần HTMl, các hàm trong app.py được tổng hợp và chưa tách thành các file riêng
 
